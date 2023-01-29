@@ -637,18 +637,25 @@ class ViewerState:
             return outputs[reformatted_output]
 
         # rendering depth outputs
-        if outputs[reformatted_output].shape[-1] == 1 and outputs[reformatted_output].dtype == torch.float:
-            output = outputs[reformatted_output]
-            if self.prev_colormap_normalize:
-                output = output - torch.min(output)
-                output = output / (torch.max(output) + eps)
-            output = output * (self.prev_colormap_range[1] - self.prev_colormap_range[0]) + self.prev_colormap_range[0]
-            output = torch.clip(output, 0, 1)
-            if self.prev_colormap_invert:
-                output = 1 - output
-            if self.prev_colormap_type == ColormapTypes.DEFAULT:
-                return colormaps.apply_colormap(output, cmap=ColormapTypes.TURBO.value)
-            return colormaps.apply_colormap(output, cmap=self.prev_colormap_type)
+
+        if self.prev_colormap_type == ColormapTypes.DEPTH or (
+            self.prev_colormap_type == ColormapTypes.DEFAULT
+            and outputs[reformatted_output].dtype == torch.float
+            and (torch.max(outputs[reformatted_output]) - 1.0) > eps  # handle floating point arithmetic
+        ):
+            accumulation_str = (
+                OutputTypes.ACCUMULATION
+                if OutputTypes.ACCUMULATION in self.output_list
+                else OutputTypes.ACCUMULATION_FINE
+            )
+            return colormaps.apply_depth_colormap(outputs[reformatted_output], 
+                accumulation=outputs[accumulation_str],near_plane=.1,far_plane=2)
+
+        # rendering accumulation outputs
+        if self.prev_colormap_type == ColormapTypes.TURBO or (
+            self.prev_colormap_type == ColormapTypes.DEFAULT and outputs[reformatted_output].dtype == torch.float
+        ):
+            return colormaps.apply_colormap(outputs[reformatted_output])
 
         # rendering semantic outputs
         if outputs[reformatted_output].dtype == torch.int:
