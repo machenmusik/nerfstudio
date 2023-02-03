@@ -842,7 +842,7 @@ class ViewerState:
         else:
             image_height = (num_vis_rays / aspect_ratio) ** 0.5
             image_height = int(round(image_height, -1))
-            image_height = max(min(self.max_resolution, image_height), 30)
+            image_height = max(min(self.max_resolution, image_height), int(152 / aspect_ratio)) # accommodate NVENC Turing minimum width
         image_width = int(image_height * aspect_ratio)
         if image_width > self.max_resolution:
             image_width = self.max_resolution
