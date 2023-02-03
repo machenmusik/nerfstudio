@@ -153,7 +153,7 @@ class ViewerConfig(PrintableConfig):
     skip_openrelay: bool = False
     """Avoid using openrelay to communicate with the viewer. Try disabling if you have trouble
     connecting to the viewer"""
-    codec: Literal["H264", "VP8"] = "VP8"
+    codec: Literal["H264", "VP8"] = "H264"
     """Video codec that viewer will use."""
     local: bool = False
     """If running local server instance, avoid using relays to communicate with the viewer."""
