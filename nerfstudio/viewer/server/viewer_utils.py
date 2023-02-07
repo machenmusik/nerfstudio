@@ -912,7 +912,7 @@ class ViewerState:
         if self.config.codec != "VP8":
             # force even values to allow hardware encoder usage
             quantize = 2
-            image_width = int(image_width / quantize) * quantize
+            image_width = int((image_width + quantize-1) / quantize) * quantize
             image_height = int(image_height / quantize) * quantize
         return image_height, image_width
 

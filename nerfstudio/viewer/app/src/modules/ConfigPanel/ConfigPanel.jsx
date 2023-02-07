@@ -187,7 +187,7 @@ export function RenderControls() {
       max_resolution: {
         label: 'Max Res.',
         value: max_resolution,
-        min: 256,
+        min: 152,
         max: 2048,
         step: 1,
         hint: 'Maximum resolution to render in viewport',
