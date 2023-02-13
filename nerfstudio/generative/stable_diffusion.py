@@ -117,6 +117,7 @@ class StableDiffusion(nn.Module):
         pipe = pipe.to(self.device)
 
         pipe.enable_attention_slicing()
+        pipe.enable_xformers_memory_efficient_attention()
 
         # use jitted unet
         filename_sd_id = sd_id.split("/")[-1]
