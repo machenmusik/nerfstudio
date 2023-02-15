@@ -199,7 +199,7 @@ export function RenderControls() {
       max_resolution: {
         label: 'Max Res.',
         value: max_resolution,
-        min: 256,
+        min: 64,
         max: 2048,
         step: 1,
         hint: 'Maximum resolution to render in viewport',
@@ -213,6 +213,8 @@ export function RenderControls() {
         },
       },
       '  ': buttonGroup({
+        '64px': () => setControls({ max_resolution: 64}),
+        '128px': () => setControls({ max_resolution: 128 }),
         '256px': () => setControls({ max_resolution: 256 }),
         '512px': () => setControls({ max_resolution: 512 }),
         '1024px': () => setControls({ max_resolution: 1024 }),
