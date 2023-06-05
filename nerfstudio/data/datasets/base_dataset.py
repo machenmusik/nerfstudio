@@ -43,6 +43,7 @@ class InputDataset(Dataset):
     """
 
     cameras: Cameras
+    exclude_batch_keys_from_device: List[str] = ["image", "mask"]
 
     def __init__(self, dataparser_outputs: DataparserOutputs, scale_factor: float = 1.0):
         super().__init__()
