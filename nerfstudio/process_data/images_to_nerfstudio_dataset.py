@@ -15,6 +15,7 @@
 """Processes an image sequence to a nerfstudio compatible dataset."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 from nerfstudio.process_data import equirect_utils, process_data_utils
@@ -31,6 +32,11 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
     1. Scales images to a specified size.
     2. Calculates the camera poses for each image using `COLMAP <https://colmap.github.io/>`_.
     """
+    percent_radius_crop: float = 1.0
+    """Create circle crop mask. The radius is the percent of the image diagonal."""
+
+    frame_mask_path: str = ""
+    """Per-frame mask path."""
 
     def main(self) -> None:
         """Process images into a nerfstudio dataset."""
@@ -66,6 +72,17 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
             num_frames = len(image_rename_map)
             summary_log.append(f"Starting with {num_frames} images")
 
+            # # Create mask
+            mask_path = process_data_utils.save_mask(
+                image_dir=self.image_dir,
+                num_downscales=self.num_downscales,
+                crop_factor=(0.0, 0.0, 0.0, 0.0),
+                percent_radius=self.percent_radius_crop,
+                frame_mask_path=self.frame_mask_path
+            )
+            if mask_path is not None:
+                summary_log.append(f"Saved mask to {mask_path}")
+
             # Downscale images
             summary_log.append(
                 process_data_utils.downscale_images(self.image_dir, self.num_downscales, verbose=self.verbose)
@@ -90,10 +107,17 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
         if require_cameras_exist and not (self.absolute_colmap_model_path / "cameras.bin").exists():
             raise RuntimeError(f"Could not find existing COLMAP results ({self.colmap_model_path / 'cameras.bin'}).")
 
+        mask_path = self.image_dir.parent / "masks"
+        if mask_path.exists():
+            if not self.frame_mask_path:
+                mask_path = "masks/mask.png"
+        else:
+            mask_path = None
+
         summary_log += self._save_transforms(
             num_frames,
             image_id_to_depth_path,
-            None,
+            mask_path,
             image_rename_map,
         )
 

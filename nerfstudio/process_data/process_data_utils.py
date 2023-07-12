@@ -230,9 +230,9 @@ def copy_images_list(
     num_frames = len(image_paths)
 
     if num_frames == 0:
-        CONSOLE.log("[bold red]:skull: No usable images in the data folder.")
+        CONSOLE.log(f"[bold red]:skull: No usable {image_dir} in the data folder.")
     else:
-        CONSOLE.log("[bold green]:tada: Done copying images.")
+        CONSOLE.log(f"[bold green]:tada: Done copying {image_dir}.")
 
     return copied_image_paths
 
@@ -298,11 +298,11 @@ def copy_images(
     Returns:
         The mapping from the original filenames to the new ones.
     """
-    with status(msg="[bold yellow]Copying images...", spinner="bouncingBall", verbose=verbose):
+    with status(msg=f"[bold yellow]Copying {image_dir}...", spinner="bouncingBall", verbose=verbose):
         image_paths = list_images(data)
 
         if len(image_paths) == 0:
-            CONSOLE.log("[bold red]:skull: No usable images in the data folder.")
+            CONSOLE.log(f"[bold red]:skull: No usable {image_dir} in the data folder.")
             sys.exit(1)
 
         copied_images = copy_images_list(
@@ -336,7 +336,7 @@ def downscale_images(
     if num_downscales == 0:
         return "No downscaling performed."
 
-    with status(msg="[bold yellow]Downscaling images...", spinner="growVertical", verbose=verbose):
+    with status(msg=f"[bold yellow]Downscaling {folder_name}...", spinner="growVertical", verbose=verbose):
         downscale_factors = [2**i for i in range(num_downscales + 1)[1:]]
         for downscale_factor in downscale_factors:
             assert downscale_factor > 1
@@ -358,7 +358,7 @@ def downscale_images(
                 ffmpeg_cmd = " ".join(ffmpeg_cmd)
                 run_command(ffmpeg_cmd, verbose=verbose)
 
-    CONSOLE.log("[bold green]:tada: Done downscaling images.")
+    CONSOLE.log(f"[bold green]:tada: Done downscaling {folder_name}.")
     downscale_text = [f"[bold blue]{2**(i+1)}x[/bold blue]" for i in range(num_downscales)]
     downscale_text = ", ".join(downscale_text[:-1]) + " and " + downscale_text[-1]
     return f"We downsampled the images by {downscale_text}"
@@ -510,6 +510,7 @@ def save_mask(
     num_downscales: int,
     crop_factor: Tuple[float, float, float, float] = (0, 0, 0, 0),
     percent_radius: float = 1.0,
+    frame_mask_path: str = "",
 ) -> Optional[Path]:
     """Save a mask for each image in the image directory.
 
@@ -522,26 +523,36 @@ def save_mask(
     Returns:
         The path to the mask file or None if no mask is needed.
     """
-    image_path = next(image_dir.glob("frame_*"))
-    image = cv2.imread(str(image_path))
-    height, width = image.shape[:2]
-    mask = generate_mask(height, width, crop_factor, percent_radius)
-    if mask is None:
-        return None
-    mask *= 255
+    if frame_mask_path == "":
+        image_path = next(image_dir.glob("frame_*"))
+        image = cv2.imread(str(image_path))
+        height, width = image.shape[:2]
+        mask = generate_mask(height, width, crop_factor, percent_radius)
+        if mask is None:
+            return None
+        mask *= 255
     mask_path = image_dir.parent / "masks"
     mask_path.mkdir(exist_ok=True)
-    cv2.imwrite(str(mask_path / "mask.png"), mask)
-    downscale_factors = [2**i for i in range(num_downscales + 1)[1:]]
-    for downscale in downscale_factors:
-        mask_path_i = image_dir.parent / f"masks_{downscale}"
-        mask_path_i.mkdir(exist_ok=True)
-        mask_path_i = mask_path_i / "mask.png"
-        mask_i = cv2.resize(
-            mask,
-            (width // downscale, height // downscale),
-            interpolation=cv2.INTER_NEAREST,
-        )
-        cv2.imwrite(str(mask_path_i), mask_i)
+    if frame_mask_path == "":
+        CONSOLE.log(":tada: Single mask")
+        cv2.imwrite(str(mask_path / "mask.png"), mask)
+    else:
+        CONSOLE.log(":tada: Per-frame masks...")
+        copy_images(Path(frame_mask_path), mask_path, False, crop_factor)        
+#
+#    downscale_factors = [2**i for i in range(num_downscales + 1)[1:]]
+#    for downscale in downscale_factors:
+#        mask_path_i = image_dir.parent / f"masks_{downscale}"
+#        mask_path_i.mkdir(exist_ok=True)
+#        mask_path_i = mask_path_i / "mask.png"
+#        mask_i = cv2.resize(
+#            mask,
+#            (width // downscale, height // downscale),
+#            interpolation=cv2.INTER_NEAREST,
+#        )
+#        cv2.imwrite(str(mask_path_i), mask_i)
+#
+    downscale_images(mask_path, num_downscales, "masks")
+#
     CONSOLE.log(":tada: Generated and saved masks.")
     return mask_path / "mask.png"
