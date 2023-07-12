@@ -66,7 +66,7 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
         if not self.skip_image_processing:
             # Copy images to output directory
             image_rename_map_paths = process_data_utils.copy_images(
-                self.data, image_dir=self.image_dir, crop_factor=self.crop_factor, verbose=self.verbose
+                self.data, image_dir=self.image_dir, crop_factor=self.crop_factor, verbose=self.verbose, num_downscales=self.num_downscales
             )
             image_rename_map = dict((a.name, b.name) for a, b in image_rename_map_paths.items())
             num_frames = len(image_rename_map)
@@ -81,12 +81,7 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
                 frame_mask_path=self.frame_mask_path
             )
             if mask_path is not None:
-                summary_log.append(f"Saved mask to {mask_path}")
-
-            # Downscale images
-            summary_log.append(
-                process_data_utils.downscale_images(self.image_dir, self.num_downscales, verbose=self.verbose)
-            )
+                summary_log.append(f"Saved mask(s)")
         else:
             num_frames = len(process_data_utils.list_images(self.data))
             if num_frames == 0:
