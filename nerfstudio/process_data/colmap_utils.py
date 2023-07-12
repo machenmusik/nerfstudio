@@ -430,18 +430,20 @@ def colmap_to_json(
         name = im_data.name
         if image_rename_map is not None:
             name = image_rename_map[name]
-        name = Path(f"./images/{name}")
 
         frame = {
-            "file_path": name.as_posix(),
+            "file_path": Path(f"./images/{name}").as_posix(),
             "transform_matrix": c2w.tolist(),
             "colmap_im_id": im_id,
         }
         if camera_mask_path is not None:
-            frame["mask_path"] = camera_mask_path.relative_to(camera_mask_path.parent.parent).as_posix()
+            if camera_mask_path.is_file():
+                frame["mask_path"] = camera_mask_path.relative_to(camera_mask_path.parent.parent).as_posix()
+            else:
+                frame["mask_path"] = (camera_mask_path.relative_to(camera_mask_path.parent) / name).as_posix()
         if image_id_to_depth_path is not None:
             depth_path = image_id_to_depth_path[im_id]
-            frame["depth_file_path"] = str(depth_path)
+            frame["depth_file_path"] = depth_path.relative_to(camera_mask_path.parent).as_posix()
         frames.append(frame)
 
     if set(cam_id_to_camera.keys()) != {1}:

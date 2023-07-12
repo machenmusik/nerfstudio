@@ -94,6 +94,8 @@ class ColmapConverterToNerfstudioDataset(BaseConverterToNerfstudioDataset):
     """If True, use GPU."""
     use_sfm_depth: bool = False
     """If True, export and use depth maps induced from SfM points."""
+    skip_depth_processing: bool = False
+    """If True, skips depth map processing such as downscaling, but will still use depth maps in transforms"""
     include_depth_debug: bool = False
     """If --use-sfm-depth and this flag is True, also export debug images showing Sf overlaid upon input images."""
 
@@ -159,15 +161,16 @@ class ColmapConverterToNerfstudioDataset(BaseConverterToNerfstudioDataset):
                 input_images_dir=self.image_dir,
                 verbose=self.verbose,
             )
-            summary_log.append(
-                process_data_utils.downscale_images(
-                    depth_dir,
-                    self.num_downscales,
-                    folder_name="depths",
-                    nearest_neighbor=True,
-                    verbose=self.verbose,
+            if not self.skip_depth_processing:
+                summary_log.append(
+                    process_data_utils.downscale_images(
+                        depth_dir,
+                        self.num_downscales,
+                        folder_name="depths",
+                        nearest_neighbor=True,
+                        verbose=self.verbose,
+                    )
                 )
-            )
             return image_id_to_depth_path, summary_log
         return None, summary_log
 
