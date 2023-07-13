@@ -32,6 +32,7 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
     1. Scales images to a specified size.
     2. Calculates the camera poses for each image using `COLMAP <https://colmap.github.io/>`_.
     """
+
     percent_radius_crop: float = 1.0
     """Create circle crop mask. The radius is the percent of the image diagonal."""
 
@@ -66,7 +67,11 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
         if not self.skip_image_processing:
             # Copy images to output directory
             image_rename_map_paths = process_data_utils.copy_images(
-                self.data, image_dir=self.image_dir, crop_factor=self.crop_factor, verbose=self.verbose, num_downscales=self.num_downscales
+                self.data,
+                image_dir=self.image_dir,
+                crop_factor=self.crop_factor,
+                verbose=self.verbose,
+                num_downscales=self.num_downscales,
             )
             image_rename_map = dict((a.name, b.name) for a, b in image_rename_map_paths.items())
             num_frames = len(image_rename_map)
@@ -78,7 +83,7 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
                 num_downscales=self.num_downscales,
                 crop_factor=(0.0, 0.0, 0.0, 0.0),
                 percent_radius=self.percent_radius_crop,
-                frame_mask_path=self.frame_mask_path
+                frame_mask_path=self.frame_mask_path,
             )
             if mask_path is not None:
                 summary_log.append("Saved mask(s)")
