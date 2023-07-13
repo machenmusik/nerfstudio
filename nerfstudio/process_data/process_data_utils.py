@@ -350,6 +350,7 @@ def copy_images(
     verbose: bool = False,
     crop_factor: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
     num_downscales: int = 0,
+    nearest_neighbor: bool = False,
 ) -> OrderedDict[Path, Path]:
     """Copy images from a directory to a new directory.
 
@@ -358,6 +359,8 @@ def copy_images(
         image_dir: Path to the output directory.
         verbose: If True, print extra logging.
         crop_factor: Portion of the image to crop. Should be in [0,1] (top, bottom, left, right)
+        num_downscales: Number of times to downscale the images. Downscales by 2 each time.
+        nearest_neighbor: Use nearest neighbor sampling (useful for depth images)
     Returns:
         The mapping from the original filenames to the new ones.
     """
@@ -374,6 +377,7 @@ def copy_images(
             crop_factor=crop_factor,
             verbose=verbose,
             num_downscales=num_downscales,
+            nearest_neighbor=nearest_neighbor,
         )
         return OrderedDict((original_path, new_path) for original_path, new_path in zip(image_paths, copied_images))
 

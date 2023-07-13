@@ -39,6 +39,9 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
     frame_mask_path: str = ""
     """Per-frame mask path."""
 
+    depth_path: str = ""
+    """Per-frame mask path."""
+
     def main(self) -> None:
         """Process images into a nerfstudio dataset."""
 
@@ -87,6 +90,18 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
             )
             if mask_path is not None:
                 summary_log.append("Saved mask(s)")
+
+            if self.depth_path != "":
+                output_depth_path = self.image_dir.parent / "depth"
+                output_depth_path.mkdir(parents=True, exist_ok=True)
+                copied_depth_images = process_data_utils.copy_images(
+                    Path(self.depth_path), 
+                    image_dir=output_depth_path, 
+                    crop_factor=self.crop_factor,
+                    verbose=self.verbose,
+                    num_downscales=self.num_downscales,
+                    nearest_neighbor=True,
+                )
         else:
             num_frames = len(process_data_utils.list_images(self.data))
             if num_frames == 0:
@@ -101,9 +116,13 @@ class ImagesToNerfstudioDataset(ColmapConverterToNerfstudioDataset):
             image_rename_map = None
 
         # Export depth maps
-        image_id_to_depth_path, log_tmp = self._export_depth()
-        summary_log += log_tmp
-
+        if self.depth_path == "":
+            image_id_to_depth_path, log_tmp = self._export_depth()
+            summary_log += log_tmp
+        else:
+            image_id_to_depth_path = {}
+            for count, value in enumerate(copied_depth_images, start=1):
+                image_id_to_depth_path[count] = output_depth_path / f"frame_{count:05}{value.suffix}"
         if require_cameras_exist and not (self.absolute_colmap_model_path / "cameras.bin").exists():
             raise RuntimeError(f"Could not find existing COLMAP results ({self.colmap_model_path / 'cameras.bin'}).")
 
